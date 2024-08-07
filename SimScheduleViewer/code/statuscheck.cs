@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
 using System.IO;
+using System.DirectoryServices.AccountManagement;
 
 namespace SimScheduleViewer.code
 {
@@ -55,7 +56,7 @@ namespace SimScheduleViewer.code
             try
             {
                 MailMessage email = new MailMessage();
-                email.To.Add("abroyle@entergy.com");
+                email.To.Add(UserPrincipal.Current.EmailAddress); // Use the signed on user's email instead of hardcoding an email to use
                 MailAddress from = new MailAddress("abroyle@entergy.com", "Simulator Scheduler");
                 email.From = from;
                 email.Subject = "Status Update from Simulator Scheduler";
@@ -67,7 +68,19 @@ namespace SimScheduleViewer.code
                 body = body + "The number of items currently on display on the 'happening now' html page is: " +code.globs.NoHTMLItems + "</br>";
                 body = body + "The scheduler is using MyLearning data from: " + x.LastUpdate.ToString("G") + "</br>";
                 body = body + "This instance started on " + x.StartTime.ToString("G") + "</br>";
-                body = body + "This instance has been running for " + x.RunTime.TotalHours + " hours" + "</br>";
+                double displayedTime = Math.Round(x.RunTime.TotalHours, 2);
+                string displayedUnit = "hours";
+                if (displayedTime < 1)
+                {
+                    displayedTime = Math.Round(x.RunTime.TotalMinutes, 2);
+                    displayedUnit = "minutes";
+                }
+                if (displayedTime < 1)
+                {
+                    displayedTime = Math.Round(x.RunTime.TotalSeconds, 2);
+                    displayedUnit = "seconds";
+                }
+                body = body + "This instance has been running for " + displayedTime + " " + displayedUnit + "</br>";
                 body = body + "The number of items in the error log: " + x.ErrorCount + "</br>"; // this method keeps failing
                 //body = body + "The number of items in the general log: " + x.LogCount + "</br>"; // this method keeps failing
                 string memused = Convert.ToString(x.MemoryUsed / 1000000) + "MB";
@@ -117,7 +130,7 @@ namespace SimScheduleViewer.code
             try
             {
                 MailMessage email = new MailMessage();
-                email.To.Add("abroyle@entergy.com");    //TODO -- Send this to Training (All) instead of Alex lol
+                email.To.Add(UserPrincipal.Current.EmailAddress);    //TODO -- Send this to Training (All) instead of whoever's signed on
                 email.From = new MailAddress("abroyle@entergy.com", "Simulator Scheduler");
                 email.Subject = "Trainging Week Update from Simulator Scheduler";
 
