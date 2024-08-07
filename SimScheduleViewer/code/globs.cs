@@ -33,6 +33,7 @@ namespace SimScheduleViewer.code
         public static TimeSpan TS_RefreshCalendars = TimeSpan.FromMinutes(30);
         public static TimeSpan TS_CycleUI = TimeSpan.FromSeconds(10);
         public static TimeSpan TS_Logger = TimeSpan.FromSeconds(10);
+        public static TimeSpan TS_WeeklyNewsletter = TimeSpan.FromDays(1);
 
 
         public static DateTime DTCSVFileWasCreated;

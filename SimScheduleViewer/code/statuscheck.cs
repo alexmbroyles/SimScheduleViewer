@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Mail;
 using System.IO;
 using System.DirectoryServices.AccountManagement;
+using System.Text;
 
 namespace SimScheduleViewer.code
 {
@@ -107,24 +108,69 @@ namespace SimScheduleViewer.code
 
         public static string BuildWeekViewHTML()
         {
-            string html = string.Empty;
+            StringBuilder html = new StringBuilder();
 
             DateTime now = DateTime.Now;
             DateTime nextMonday = now.AddDays(((int)DayOfWeek.Monday - (int)now.DayOfWeek + 7) % 7);
-            DateTime nextThursday = nextMonday.AddDays(3);
+            DateTime nextSunday = nextMonday.AddDays(6);
 
-            List<MyLearningItem> itemsThisWeek = code.globs.MyLearningItemsList.Where(x => x.StartTime > nextMonday && x.StartTime < nextThursday).ToList();
+            List<MyLearningItem> itemsThisWeek = code.globs.MyLearningItemsList.Where(x => x.StartTime > nextMonday && x.StartTime < nextSunday).ToList();
 
+            html.Append("<table border='1'>");
+            html.Append("<tr>");
+            html.Append("<th>Monday</th>");
+            html.Append("<th>Tuesday</th>");
+            html.Append("<th>Wednesday</th>");
+            html.Append("<th>Thursday</th>");
+            html.Append("<th>Friday</th>");
+            html.Append("<th>Saturday</th>");
+            html.Append("<th>Sunday</th>");
+            html.Append("</tr>");
+
+            // TODO -- Make this look nicer with CSS trickery
+            // This loop will make a table of events coming up. Appearance tries to mimmick the Weekly Agenda View.
             foreach (var item in itemsThisWeek)
             {
-                Console.WriteLine(item.StartTime);
+                int startDayOfWeek = (int)item.StartTime.DayOfWeek;
+                int endDayOfWeek = (int)item.EndTime.DayOfWeek;
+                if (endDayOfWeek < startDayOfWeek)
+                {
+                    endDayOfWeek += 7;
+                }
+                html.Append("<tr>");
+                for (int i = 1; i <= 7; i++)
+                {
+                    if (i == startDayOfWeek)
+                    {
+                        int span = Math.Min(7, endDayOfWeek - startDayOfWeek + 1);
+                        html.Append($"<td colspan='{span}'>");
+                        html.Append($"<p>Name: {item.Description}</p>");
+                        html.Append($"<p>ID: {item.ClassID}</p>");
+                        html.Append($"<p>Begins: {item.StartTime}</p>");
+                        html.Append($"<p>Ends: {item.EndTime}</p>");
+                        html.Append($"<p>Duration: {item.TotalHours} hours</p>");
+                        html.Append($"<p>Instructor: {item.InstructorFirstName} {item.InstructorLastName}</p>");
+                        html.Append($"<p>Location: {item.PrimaryLocation}</p>");
+                        html.Append("</td>"); i += span - 1;
+                    }
+                    else
+                    {
+                        html.Append("<td></td>");
+                    }
+                }
+                html.Append("</tr>");
             }
+            html.Append("</table>");
 
-            return html;
+            return html.ToString();
         }
 
         public static void SendFancyStatusUpdate()
         {
+            if (DateTime.Now.DayOfWeek != DayOfWeek.Sunday)
+            {
+                Console.WriteLine("Today's not Sunday! This will be replaced with a return when the logic is done...");
+            }
             SmtpClient EntergySmtpClient = new SmtpClient("mail.prod.entergy.com");
             EntergySmtpClient.UseDefaultCredentials = true;
             try
