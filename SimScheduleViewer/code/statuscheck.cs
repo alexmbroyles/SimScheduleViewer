@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
 using System.IO;
@@ -89,6 +90,48 @@ namespace SimScheduleViewer.code
                 code.common.error_logger(ex, "Error sending email for status check");
             }
 
+        }
+
+        public static string BuildWeekViewHTML()
+        {
+            string html = string.Empty;
+
+            DateTime now = DateTime.Now;
+            DateTime nextMonday = now.AddDays(((int)DayOfWeek.Monday - (int)now.DayOfWeek + 7) % 7);
+            DateTime nextThursday = nextMonday.AddDays(3);
+
+            List<MyLearningItem> itemsThisWeek = code.globs.MyLearningItemsList.Where(x => x.StartTime > nextMonday && x.StartTime < nextThursday).ToList();
+
+            foreach (var item in itemsThisWeek)
+            {
+                Console.WriteLine(item.StartTime);
+            }
+
+            return html;
+        }
+
+        public static void SendFancyStatusUpdate()
+        {
+            SmtpClient EntergySmtpClient = new SmtpClient("mail.prod.entergy.com");
+            EntergySmtpClient.UseDefaultCredentials = true;
+            try
+            {
+                MailMessage email = new MailMessage();
+                email.To.Add("abroyle@entergy.com");    //TODO -- Send this to Training (All) instead of Alex lol
+                email.From = new MailAddress("abroyle@entergy.com", "Simulator Scheduler");
+                email.Subject = "Trainging Week Update from Simulator Scheduler";
+
+                email.Body = BuildWeekViewHTML();
+
+                email.BodyEncoding = System.Text.Encoding.UTF8;
+                email.IsBodyHtml = true;
+                EntergySmtpClient.Send(email);
+                code.common.AddToLogList("The weekly update has been sent out (an email was sent to " + email.To[0].ToString() +")");
+            }
+            catch (Exception ex)
+            {
+                code.common.error_logger(ex, "Error sending email for weekly update!");
+            }
         }
         public static string getCurrentCpuUsage()
         {
