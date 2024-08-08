@@ -1,0 +1,4 @@
+﻿/* Set a minimum width so the padding can look nicer */
+th {
+    min-width: 70px;
+}

@@ -176,6 +176,11 @@
   <ItemGroup>
     <Resource Include="Resources\signage.PNG" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="code\email.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

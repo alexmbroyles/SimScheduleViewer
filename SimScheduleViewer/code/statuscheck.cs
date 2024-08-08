@@ -6,6 +6,7 @@ using System.Net.Mail;
 using System.IO;
 using System.DirectoryServices.AccountManagement;
 using System.Text;
+using System.Windows.Media;
 
 namespace SimScheduleViewer.code
 {
@@ -106,6 +107,48 @@ namespace SimScheduleViewer.code
 
         }
 
+        /// <summary>
+        /// Same as SmartBrush, except spits out a hex code
+        /// </summary>
+        /// <param name="classType"></param>
+        /// <param name="item"></param>
+        /// <param name="desc"></param>
+        /// <returns>
+        /// A <c>string</c> that represents a HEX code color
+        /// </returns>
+        public static string SmartRowColor(string classType, string item, string desc)
+        {
+
+            if (classType.ToUpper() == "EXAM")
+            {
+                return "#ff0000";
+            }
+            if (item.ToUpper().Contains("NRC") || desc.ToUpper().Contains("VALIDATION"))
+            {
+                return "#d46600";
+            }
+            if (desc.ToUpper().Contains("SRO CERTIFIED INSTRUCTOR"))
+            {
+                return "#1b4ffa";
+            }
+            if (desc.ToUpper().Contains("MAINT") || item.ToUpper().Contains("MAINT"))
+            {
+                return "#a8a8a8";
+            }
+            if (item.ToUpper().Contains("LOR"))
+            {
+                return "#19f742";
+            }
+            else
+            {
+                return "#FFD700";
+            }
+
+
+            //return PickBrush();
+
+        }
+
         public static string BuildWeekViewHTML()
         {
             StringBuilder html = new StringBuilder();
@@ -116,6 +159,13 @@ namespace SimScheduleViewer.code
 
             List<MyLearningItem> itemsThisWeek = code.globs.MyLearningItemsList.Where(x => x.StartTime > nextMonday && x.StartTime < nextSunday).ToList();
 
+            // The CSS Trickery 
+            string cssData = File.ReadAllText("code\\email.css");
+            html.Append("<style>");
+            html.Append(cssData);
+            html.Append("</style>");
+
+            // Build the table headers
             html.Append("<table border='1'>");
             html.Append("<tr>");
             html.Append("<th>Monday</th>");
@@ -127,10 +177,10 @@ namespace SimScheduleViewer.code
             html.Append("<th>Sunday</th>");
             html.Append("</tr>");
 
-            // TODO -- Make this look nicer with CSS trickery
-            // This loop will make a table of events coming up. Appearance tries to mimmick the Weekly Agenda View.
+            // Loop through each event and table-ify it. (Mimics how the Week View looks)
             foreach (var item in itemsThisWeek)
             {
+                string itemColor = SmartRowColor(item.ItemType, item.ItemID, item.Description);
                 int startDayOfWeek = (int)item.StartTime.DayOfWeek;
                 int endDayOfWeek = (int)item.EndTime.DayOfWeek;
                 if (endDayOfWeek < startDayOfWeek)
@@ -143,15 +193,16 @@ namespace SimScheduleViewer.code
                     if (i == startDayOfWeek)
                     {
                         int span = Math.Min(7, endDayOfWeek - startDayOfWeek + 1);
-                        html.Append($"<td colspan='{span}'>");
+                        html.Append($"<td colspan='{span}' style='background-color: {itemColor}'>");
                         html.Append($"<p>Name: {item.Description}</p>");
-                        html.Append($"<p>ID: {item.ClassID}</p>");
+                        html.Append($"<p>{item.ItemID} | Class ID: {item.ClassID}</p>");
                         html.Append($"<p>Begins: {item.StartTime}</p>");
                         html.Append($"<p>Ends: {item.EndTime}</p>");
                         html.Append($"<p>Duration: {item.TotalHours} hours</p>");
                         html.Append($"<p>Instructor: {item.InstructorFirstName} {item.InstructorLastName}</p>");
                         html.Append($"<p>Location: {item.PrimaryLocation}</p>");
-                        html.Append("</td>"); i += span - 1;
+                        html.Append("</td>");
+                        i += span - 1;
                     }
                     else
                     {
